@@ -9,7 +9,7 @@ output: html_document
 library(tidyverse)
 library(viridis)
 knitr::opts_chunk$set(
-	echo = TRUE,
+	echo = FALSE,
 	warning = FALSE,
 	fig.width = 8, 
   fig.height = 6,
@@ -23,3 +23,78 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
+
+```{r}
+surv_df <- read_csv("./SurvCancer.csv") %>% 
+  janitor::clean_names()
+```
+
+This is a dataset of the survival time of different types of cancer.
+
+This dataset is `r nrow(surv_df)` rows by `r ncol(surv_df)` columns.
+
+There are `r n_distinct(pull(surv_df,organ))` types of organs in the dataset.
+
+```{r}
+surv_df %>% 
+  count(organ) %>% 
+  rename(Organ = organ,
+         Count = n) %>% 
+  pivot_wider(
+    names_from = Organ,
+    values_from = Count
+  ) %>% 
+  knitr::kable(caption = "Count of Subjects.")
+```
+
+```{r}
+surv_df %>% 
+  group_by(organ) %>% 
+  summarize(Median = median(survival),
+            Q1 = quantile(survival, probs = .25),
+            Q3 = quantile(survival, probs = .75)
+            ) %>% 
+  rename(Organ = organ) %>% 
+  knitr::kable()
+```
+
+```{r}
+surv_df %>% 
+  mutate(organ = 
+           as.factor(organ),
+         organ = fct_reorder(organ, survival)) %>% 
+  ggplot(aes(x = organ, y = survival)) +
+  geom_boxplot() + 
+  labs(x = "Organ",
+       y = "Survival")
+```
+
+```{r, fig.width = 10}
+surv_df %>% 
+  ggplot(aes(x = survival)) +
+  geom_histogram(bins = 5) +
+  facet_grid(.~organ, scales = "free_x") +
+  labs(y = "Count",
+       x = "Survival",
+       caption = "Frequency of Survival.") +
+  scale_y_continuous(breaks = c(2,4,6,8,10))
+```
+
+```{r}
+surv_df %>% 
+  group_by(organ) %>% 
+  lm() %>% 
+  anova()
+```
+
+$H_0: \bar{X_1} = \bar{X_2} = ... = \bar{X_n}$
+
+$H_1: \bar{X_i} \ne \bar{X_j}, i \ne j$
+
+Reject $H_0$ when $F_{stat} > F_{crit} = F_{n-k-1,~1-\alpha/2 = F_{}}$
+
+Fail to reject $H_0$ when $F_{stat} < F_{crit}$
+
+There is sufficient evidence to conclude a significant difference between the variances 
+
+of the sample means (p = .0002295).
