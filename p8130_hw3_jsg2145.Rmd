@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(viridis)
+library(DescTools)
 knitr::opts_chunk$set(
 	echo = FALSE,
 	warning = FALSE,
@@ -24,9 +25,15 @@ scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
+## Problem 2
+
 ```{r}
 surv_df <- read_csv("./SurvCancer.csv") %>% 
-  janitor::clean_names()
+  janitor::clean_names() %>% 
+  mutate(organ =
+           as.factor(organ),
+         organ = 
+           fct_reorder(organ, survival, .fun = median))
 ```
 
 This is a dataset of the survival time of different types of cancer.
@@ -51,8 +58,7 @@ surv_df %>%
 surv_df %>% 
   group_by(organ) %>% 
   summarize(Median = median(survival),
-            Q1 = quantile(survival, probs = .25),
-            Q3 = quantile(survival, probs = .75)
+            IQR = round(IQR(survival), digits = 1)
             ) %>% 
   rename(Organ = organ) %>% 
   knitr::kable()
@@ -60,14 +66,54 @@ surv_df %>%
 
 ```{r}
 surv_df %>% 
-  mutate(organ = 
-           as.factor(organ),
-         organ = fct_reorder(organ, survival)) %>% 
   ggplot(aes(x = organ, y = survival)) +
   geom_boxplot() + 
   labs(x = "Organ",
-       y = "Survival")
+       y = "Survival Time")
 ```
+
+```{r}
+surv_df %>% 
+  lm() %>% 
+  anova()
+```
+
+$H_0: \bar{X_1} = \bar{X_2} = ... = \bar{X_n}$
+
+$H_1: \bar{X_i} \ne \bar{X_j}, i \ne j$
+
+Reject $H_0$ when $F_{stat} > F_{crit} = F_{n-k-1,~1-\alpha/2 = F_{}}$
+
+Fail to reject $H_0$ when $F_{stat} < F_{crit}$
+
+There is sufficient evidence to conclude a significant difference between the 
+
+the sample means (p = .0002295).
+
+```{r}
+pairwise.t.test(surv_df$survival, surv_df$organ, p.adj = "bonf", alternative = "two.sided")
+```
+
+
+```{r}
+model1 <- surv_df %>% 
+  lm() %>% 
+  aov()
+
+TukeyHSD(model1, conf.level = .01)
+```
+
+```{r}
+DunnettTest(surv_df$survival ~ surv_df$organ, control = "Breast")
+```
+
+In Bonferroni, Tukey, and Dunnett adjustments a change is made to alpha 
+
+to correct for the family-wise error rate. These results show that in all 
+
+three methods, survival times of patients with breast cancer were significantly 
+
+different at alpha = .01 from stomach cancer, bronchus cancer, and colon cancer.
 
 ```{r, fig.width = 10}
 surv_df %>% 
@@ -81,20 +127,39 @@ surv_df %>%
 ```
 
 ```{r}
-surv_df %>% 
-  group_by(organ) %>% 
-  lm() %>% 
-  anova()
+uhat<-resid(model1)
+
+shapiro.test(uhat)
 ```
 
-$H_0: \bar{X_1} = \bar{X_2} = ... = \bar{X_n}$
+An observation of the distribution of data in this dataset shows the data is 
 
-$H_1: \bar{X_i} \ne \bar{X_j}, i \ne j$
+not normally distributed. The Shapiro-Wilk normality test confirms this, returning
 
-Reject $H_0$ when $F_{stat} > F_{crit} = F_{n-k-1,~1-\alpha/2 = F_{}}$
+a very low p-value, indicating that the assumption that the data are normal can be 
 
-Fail to reject $H_0$ when $F_{stat} < F_{crit}$
+rejected. One solution to this is to use a non-parametric test that depends on ranked
 
-There is sufficient evidence to conclude a significant difference between the variances 
+values rather than on a normality assumption. A Kruskal-Wallis test is acceptable here
 
-of the sample means (p = .0002295).
+because it extends the Wilcoxon rank-sum test to more than two groups.
+
+```{r}
+kruskal.test(survival ~ organ, data = surv_df)
+```
+
+This test confirms there are significant differences between the survival times 
+
+of patients with different types of cancer at a p-value of 0.05. With further
+
+pairwise testing it is possible to determine which pairs of groups are significantly different.
+
+```{r}
+pairwise.wilcox.test(surv_df$survival, surv_df$organ, p.adj = "bonf")
+```
+
+This table shows that without the normality assumption, none of the groups are 
+
+significantly different. 
+
+## Problem 3
