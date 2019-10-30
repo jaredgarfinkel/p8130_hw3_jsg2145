@@ -57,9 +57,12 @@ surv_df %>%
 ```{r}
 surv_df %>% 
   group_by(organ) %>% 
-  summarize(Median = median(survival),
-            IQR = round(IQR(survival), digits = 1)
-            ) %>% 
+  summarize(
+    Min = min(survival),
+    "Qrt 1" = quantile(survival, .25),
+    Median = median(survival),
+    "Qrt 3" = quantile(survival, .75),
+  ) %>% 
   rename(Organ = organ) %>% 
   knitr::kable()
 ```
@@ -127,6 +130,14 @@ surv_df %>%
 ```
 
 ```{r}
+surv_df %>% 
+  ggplot(aes(sample = survival)) +
+  stat_qq() +
+  stat_qq_line()
+```
+
+
+```{r}
 uhat<-resid(model1)
 
 shapiro.test(uhat)
@@ -134,7 +145,9 @@ shapiro.test(uhat)
 
 An observation of the distribution of data in this dataset shows the data is 
 
-not normally distributed. The Shapiro-Wilk normality test confirms this, returning
+not normally distributed. A qq-plot allows one to visualize the observations compared
+
+to the theoretical normal. The Shapiro-Wilk normality test confirms this, returning
 
 a very low p-value, indicating that the assumption that the data are normal can be 
 
@@ -150,9 +163,13 @@ kruskal.test(survival ~ organ, data = surv_df)
 
 This test confirms there are significant differences between the survival times 
 
-of patients with different types of cancer at a p-value of 0.05. With further
+of patients with different types of cancer at a p-value of 0.01. Compare the Kruskal-Wallis
 
-pairwise testing it is possible to determine which pairs of groups are significantly different.
+rank sum test to the parametric test, which had a p-value of .00023. The Kruskal-Wallis test
+
+is more conserviate. With further pairwise testing it is possible to determine 
+
+which pairs of groups are significantly different.
 
 ```{r}
 pairwise.wilcox.test(surv_df$survival, surv_df$organ, p.adj = "bonf")
@@ -160,7 +177,7 @@ pairwise.wilcox.test(surv_df$survival, surv_df$organ, p.adj = "bonf")
 
 This table shows that without the normality assumption, none of the groups are 
 
-significantly different. 
+significantly different with a Bonferroni adjustment.
 
 ## Problem 3
 
@@ -175,18 +192,102 @@ epi_df <- tibble(
 ```
 
 ```{r}
-epi_df %>% 
+epi_df %>%
   rename(Treatment = cats,
          "Sample Size" = n,
          "Average # of Episodes in a Year" = u,
          "Standard Error" = se) %>% 
   knitr::kable()
 ```
+The mean of the groups is a weighted average.
+
+$\mu_{group} = \frac{n_1*\mu_1+n_2*\mu_2}{n_1+n_2}$
+
+```{r}
+epi_zinc_df <- tibble(
+  cats = c("non_zinc", "zinc"),
+  n = c(56+54, 54+55),
+  u = c((56*1.1+54*1.4)/(56+54), ((54*.7+55*.8)/(54+55))),
+  var = c((((56-1)*2.24)+(54-1)*2.16)/(56+54-2),(((54-1)*.54)+(55-1)*.54)/(54+55-2))
+)
+```
+
+The effect size is $\mu_{non-zinc}-\mu_{zinc}$ = 1.25-.75 = 0.5 episodes per year
+
+The standard deviation of the groups can be considered to be the standard deviation
+
+times the square root of the sample size.
+
+$se = \sqrt{\frac{\sigma^2}{n}}$
 
 ```{r}
 epi_df %>% 
   mutate(
-    sd = se*sqrt(n)
-  )
+    sd = se*sqrt(n),
+    var = sd^2
+  ) %>% 
+  rename("Treatment" = cats,
+         "Sample Size" = n,
+         "Average # of Episodes in a Year" = u,
+         "Standard Error" = se,
+         "Variance" = var,
+         "Standard Deviation" = sd) %>% 
+  knitr::kable()
 ```
 
+```{r, F-test, eval = FALSE}
+tibble(
+  f_crit_nozinc_l = qf(.05, 55, 53),
+  f_nozinc = 2.24/2.16,
+  f_crit_nozinc_u = qf(.95, 55, 53),
+  f_crit_zinc_l = qf(.05, 53, 54),
+  f_zinc = .54/.55,
+  f_crit_zinc_u = qf(.95, 53, 54)
+) %>% 
+  knitr::kable()
+
+```
+
+Because the standard deviations are very similar they can be assumed to be the same.
+
+So, the variance of the groups can be calculated using pooled variance.
+
+$s^2 = \frac{(n_1-1)*s_{1}^{2}+(n_2-1)*s_{2}^{2}}{n_1+n_2-2}$
+
+The sample size can be calculated using the following equations for equal allocations:
+
+$n = \frac{(\sigma_{1}^{2}+\sigma_{2}^{2})(z_{1-\alpha/2}+z_{1-\beta})^2}{\Delta^2}$
+
+
+
+```{r}
+qnorm(.975)
+qnorm(.8)
+```
+
+
+= $\frac{(2.2+0.54)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
+
+= $\frac{(2.2+0.54)(1.96+.84)^2}{(.5)^2}$
+
+= `r (2.2+.54)*(1.96+.84)^2/(.5)^2` = 85.9 ~ 86
+
+Each group should have 86 subjects to reach this power and significance.
+
+For the sample size of unequal allocations, the following equations apply:
+
+$n_1 = \frac{(\sigma_{1}^{2}+\sigma_{2}^{2}/k)(z_{1-\alpha/2}+z_{1-\beta})^2}{\Delta^2}$
+
+$n_2 = \frac{(k*\sigma_{1}^{2}+\sigma_{2}^{2})(z_{1-\alpha/2}+z_{1-\beta})^2}{\Delta^2}$
+
+So,
+
+$n_1 = \frac{(2.2+0.54/2)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
+
+= `r (2.2+54/2)*(1.96+.84)^2/.5^2` = 915.7 ~ 916
+
+$n_2 = \frac{(2*2.2+0.54)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
+
+= `r (2*2.2+54)*(1.96+.84)^2/.5^2` = 1831.4 ~ 1832
+
+The non-zinc group should have 1832 subjects, and the zinc group should have 916 subjects.
