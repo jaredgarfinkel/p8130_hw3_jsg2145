@@ -62,6 +62,7 @@ surv_df %>%
     "Qrt 1" = quantile(survival, .25),
     Median = median(survival),
     "Qrt 3" = quantile(survival, .75),
+    Max = max(survival)
   ) %>% 
   rename(Organ = organ) %>% 
   knitr::kable()
@@ -78,14 +79,15 @@ surv_df %>%
 ```{r}
 surv_df %>% 
   lm() %>% 
-  anova()
+  anova() %>% 
+  knitr::kable()
 ```
 
 $H_0: \bar{X_1} = \bar{X_2} = ... = \bar{X_n}$
 
 $H_1: \bar{X_i} \ne \bar{X_j}, i \ne j$
 
-Reject $H_0$ when $F_{stat} > F_{crit} = F_{k-1,~n-k,~1-\alpha/2}=F_{4,~214,~.995}$ = `r qf(.995, 4, 214)`
+Reject $H_0$ when $F_{stat} > F_{crit} = F_{k-1,~n-k,~1-\alpha/2}=F_{4,~59,~.995}$ = `r qf(.995, 4, 59)`
 
 Fail to reject $H_0$ when $F_{stat} \le F_{crit}$
 
@@ -287,10 +289,10 @@ So,
 
 $n_1 = \frac{(2.2+0.54/2)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
 
-= `r (2.2+54/2)*(1.96+.84)^2/.5^2` = 915.7 ~ 916
+= `r (2.2+.54/2)*(1.96+.84)^2/.5^2` = 77.5 ~ 78
 
 $n_2 = \frac{(2*2.2+0.54)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
 
-= `r (2*2.2+54)*(1.96+.84)^2/.5^2` = 1831.4 ~ 1832
+= `r (2*2.2+.54)*(1.96+.84)^2/.5^2` = 154.9 ~ 155
 
 The non-zinc group should have 1832 subjects, and the zinc group should have 916 subjects.
