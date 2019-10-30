@@ -460,9 +460,10 @@ summary {
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 <p><span class="math inline">\(H_0: \bar{X_1} = \bar{X_2} = ... = \bar{X_n}\)</span></p>
 <p><span class="math inline">\(H_1: \bar{X_i} \ne \bar{X_j}, i \ne j\)</span></p>
-<p>Reject <span class="math inline">\(H_0\)</span> when <span class="math inline">\(F_{stat} &gt; F_{crit} = F_{n-k-1,~1-\alpha/2 = F_{}}\)</span></p>
-<p>Fail to reject <span class="math inline">\(H_0\)</span> when <span class="math inline">\(F_{stat} &lt; F_{crit}\)</span></p>
-<p>There is sufficient evidence to conclude a significant difference between the</p>
+<p>Reject <span class="math inline">\(H_0\)</span> when <span class="math inline">\(F_{stat} &gt; F_{crit} = F_{k-1,~n-k,~1-\alpha/2}=F_{4,~214,~.995}\)</span> = 3.828721</p>
+<p>Fail to reject <span class="math inline">\(H_0\)</span> when <span class="math inline">\(F_{stat} \le F_{crit}\)</span></p>
+<p><span class="math inline">\(F_{stat} = \frac{SS~Between/(k-1)}{SS~Within/(n-k)} = \frac{2883940}{448274}\)</span> = 6.4334313</p>
+<p>Since <span class="math inline">\(F_{stat} &gt; F_{crit}\)</span>, there is sufficient evidence to conclude a significant difference between the</p>
 <p>the sample means (p = .0002295).</p>
 <pre><code>## 
 ##  Pairwise comparisons using t tests with pooled SD 
@@ -517,6 +518,8 @@ summary {
 ## 
 ## data:  uhat
 ## W = 0.8068, p-value = 9.981e-08</code></pre>
+<p><span class="math inline">\(H_0\)</span>: The data are sampled from a population having a normal distribution</p>
+<p><span class="math inline">\(H_1\)</span>: The data are sampled from a population not having a normal distribution</p>
 <p>An observation of the distribution of data in this dataset shows the data is</p>
 <p>not normally distributed. A qq-plot allows one to visualize the observations compared</p>
 <p>to the theoretical normal. The Shapiro-Wilk normality test confirms this, returning</p>
@@ -585,17 +588,12 @@ summary {
 <td align="right">0.8</td>
 <td align="right">0.1</td>
 </tr>
-<tr class="odd">
-<td align="left">The mean of</td>
-<td align="right">the groups is</td>
-<td align="right">a weighted average.</td>
-<td align="right"></td>
-</tr>
 </tbody>
 </table>
+<p>The mean of the groups is a weighted average.</p>
 <p><span class="math inline">\(\mu_{group} = \frac{n_1*\mu_1+n_2*\mu_2}{n_1+n_2}\)</span></p>
 <p>The effect size is <span class="math inline">\(\mu_{non-zinc}-\mu_{zinc}\)</span> = 1.25-.75 = 0.5 episodes per year</p>
-<p>The standard deviation of the groups can be considered to be the standard deviation</p>
+<p>The standard deviation of the groups can be considered to be the standard error</p>
 <p>times the square root of the sample size.</p>
 <p><span class="math inline">\(se = \sqrt{\frac{\sigma^2}{n}}\)</span></p>
 <table>
@@ -649,9 +647,9 @@ summary {
 <p><span class="math inline">\(s^2 = \frac{(n_1-1)*s_{1}^{2}+(n_2-1)*s_{2}^{2}}{n_1+n_2-2}\)</span></p>
 <p>The sample size can be calculated using the following equations for equal allocations:</p>
 <p><span class="math inline">\(n = \frac{(\sigma_{1}^{2}+\sigma_{2}^{2})(z_{1-\alpha/2}+z_{1-\beta})^2}{\Delta^2}\)</span></p>
-<pre><code>## [1] 1.959964</code></pre>
-<pre><code>## [1] 0.8416212</code></pre>
-<p>= <span class="math inline">\(\frac{(2.2+0.54)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}\)</span></p>
+<p><span class="math inline">\(z_{1-\alpha/2}\)</span> = 1.959964</p>
+<p><span class="math inline">\(z_{1-\beta}\)</span> = 0.8416212</p>
+<p>So,</p>
 <p>= <span class="math inline">\(\frac{(2.2+0.54)(1.96+.84)^2}{(.5)^2}\)</span></p>
 <p>= 85.9264 = 85.9 ~ 86</p>
 <p>Each group should have 86 subjects to reach this power and significance.</p>

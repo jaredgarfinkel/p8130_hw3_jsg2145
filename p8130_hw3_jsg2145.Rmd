@@ -85,11 +85,13 @@ $H_0: \bar{X_1} = \bar{X_2} = ... = \bar{X_n}$
 
 $H_1: \bar{X_i} \ne \bar{X_j}, i \ne j$
 
-Reject $H_0$ when $F_{stat} > F_{crit} = F_{n-k-1,~1-\alpha/2 = F_{}}$
+Reject $H_0$ when $F_{stat} > F_{crit} = F_{k-1,~n-k,~1-\alpha/2}=F_{4,~214,~.995}$ = `r qf(.995, 4, 214)`
 
-Fail to reject $H_0$ when $F_{stat} < F_{crit}$
+Fail to reject $H_0$ when $F_{stat} \le F_{crit}$
 
-There is sufficient evidence to conclude a significant difference between the 
+$F_{stat} = \frac{SS~Between/(k-1)}{SS~Within/(n-k)} = \frac{2883940}{448274}$ = `r 2883940/448274`
+
+Since $F_{stat} > F_{crit}$, there is sufficient evidence to conclude a significant difference between the 
 
 the sample means (p = .0002295).
 
@@ -142,6 +144,10 @@ uhat<-resid(model1)
 
 shapiro.test(uhat)
 ```
+
+$H_0$: The data are sampled from a population having a normal distribution
+
+$H_1$: The data are sampled from a population not having a normal distribution
 
 An observation of the distribution of data in this dataset shows the data is 
 
@@ -199,6 +205,7 @@ epi_df %>%
          "Standard Error" = se) %>% 
   knitr::kable()
 ```
+
 The mean of the groups is a weighted average.
 
 $\mu_{group} = \frac{n_1*\mu_1+n_2*\mu_2}{n_1+n_2}$
@@ -214,7 +221,7 @@ epi_zinc_df <- tibble(
 
 The effect size is $\mu_{non-zinc}-\mu_{zinc}$ = 1.25-.75 = 0.5 episodes per year
 
-The standard deviation of the groups can be considered to be the standard deviation
+The standard deviation of the groups can be considered to be the standard error
 
 times the square root of the sample size.
 
@@ -258,15 +265,11 @@ The sample size can be calculated using the following equations for equal alloca
 
 $n = \frac{(\sigma_{1}^{2}+\sigma_{2}^{2})(z_{1-\alpha/2}+z_{1-\beta})^2}{\Delta^2}$
 
+$z_{1-\alpha/2}$ = `r qnorm(.975)`
 
+$z_{1-\beta}$ = `r qnorm(.8)`
 
-```{r}
-qnorm(.975)
-qnorm(.8)
-```
-
-
-= $\frac{(2.2+0.54)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
+So,
 
 = $\frac{(2.2+0.54)(1.96+.84)^2}{(.5)^2}$
 
