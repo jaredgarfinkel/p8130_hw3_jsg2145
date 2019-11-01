@@ -95,7 +95,7 @@ $F_{stat} = \frac{SS~Between/(k-1)}{SS~Within/(n-k)} = \frac{2883940}{448274}$ =
 
 Since $F_{stat} > F_{crit}$, there is sufficient evidence to conclude a significant difference between the 
 
-the sample means (p = .0002295).
+the sample means (p = .0002295). We conduct adjusted pairwise testing to determine which pairs are different.
 
 ```{r}
 pairwise.t.test(surv_df$survival, surv_df$organ, p.adj = "bonf", alternative = "two.sided")
@@ -120,7 +120,7 @@ to correct for the family-wise error rate. These results show that in all
 
 three methods, survival times of patients with breast cancer were significantly 
 
-different at alpha = .01 from stomach cancer, bronchus cancer, and colon cancer.
+different from stomach cancer, bronchus cancer, and colon cancer at alpha = 0.01.
 
 ```{r, fig.width = 10}
 surv_df %>% 
@@ -171,11 +171,11 @@ kruskal.test(survival ~ organ, data = surv_df)
 
 This test confirms there are significant differences between the survival times 
 
-of patients with different types of cancer at a p-value of 0.01. Compare the Kruskal-Wallis
+of patients with different types of cancer at a significance level of 0.01. Compare the Kruskal-Wallis
 
 rank sum test to the parametric test, which had a p-value of .00023. The Kruskal-Wallis test
 
-is more conserviate. With further pairwise testing it is possible to determine 
+is more conservative. With further pairwise testing it is possible to determine 
 
 which pairs of groups are significantly different.
 
@@ -212,27 +212,18 @@ The mean of the groups is a weighted average.
 
 $\mu_{group} = \frac{n_1*\mu_1+n_2*\mu_2}{n_1+n_2}$
 
-```{r}
-epi_zinc_df <- tibble(
-  cats = c("non_zinc", "zinc"),
-  n = c(56+54, 54+55),
-  u = c((56*1.1+54*1.4)/(56+54), ((54*.7+55*.8)/(54+55))),
-  var = c((((56-1)*2.24)+(54-1)*2.16)/(56+54-2),(((54-1)*.54)+(55-1)*.54)/(54+55-2))
-)
-```
-
 The effect size is $\mu_{non-zinc}-\mu_{zinc}$ = 1.25-.75 = 0.5 episodes per year
 
 The standard deviation of the groups can be considered to be the standard error
 
 times the square root of the sample size.
 
-$se = \sqrt{\frac{\sigma^2}{n}}$
+$se = \sqrt{\frac{\sigma^2}{n}},~\sigma = se*\sqrt{n}$
 
 ```{r}
 epi_df %>% 
   mutate(
-    sd = se*sqrt(n),
+    sd = round(se*sqrt(n), digits=2),
     var = sd^2
   ) %>% 
   rename("Treatment" = cats,
@@ -245,16 +236,14 @@ epi_df %>%
 ```
 
 ```{r, F-test, eval = FALSE}
-tibble(
+f_test <- tibble(
   f_crit_nozinc_l = qf(.05, 55, 53),
   f_nozinc = 2.24/2.16,
   f_crit_nozinc_u = qf(.95, 55, 53),
   f_crit_zinc_l = qf(.05, 53, 54),
   f_zinc = .54/.55,
   f_crit_zinc_u = qf(.95, 53, 54)
-) %>% 
-  knitr::kable()
-
+)
 ```
 
 Because the standard deviations are very similar they can be assumed to be the same.
@@ -262,6 +251,16 @@ Because the standard deviations are very similar they can be assumed to be the s
 So, the variance of the groups can be calculated using pooled variance.
 
 $s^2 = \frac{(n_1-1)*s_{1}^{2}+(n_2-1)*s_{2}^{2}}{n_1+n_2-2}$
+
+```{r}
+tibble(
+  cats = c("non_zinc", "zinc"),
+  n = c(56+54, 54+55),
+  u = c(round((56*1.1+54*1.4)/(56+54), digits = 2), round(((54*.7+55*.8)/(54+55)), digits = 2)),
+  var = c(round((((56-1)*2.24)+(54-1)*2.16)/(56+54-2), digits = 2),round((((54-1)*.54)+(55-1)*.54)/(54+55-2), digits = 2))
+) %>% 
+  knitr::kable()
+```
 
 The sample size can be calculated using the following equations for equal allocations:
 
@@ -287,12 +286,12 @@ $n_2 = \frac{(k*\sigma_{1}^{2}+\sigma_{2}^{2})(z_{1-\alpha/2}+z_{1-\beta})^2}{\D
 
 So,
 
-$n_1 = \frac{(2.2+0.54/2)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
+$n_1 = \frac{(0.54+2.2/2)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
 
-= `r (2.2+.54/2)*(1.96+.84)^2/.5^2` = 77.5 ~ 78
+= `r (.54+2.2/2)*(1.96+.84)^2/.5^2` = 51.4 ~ 52
 
-$n_2 = \frac{(2*2.2+0.54)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
+$n_2 = \frac{(2*.54+2.2)(z_{1-\alpha/2}+z_{1-\beta})^2}{(.5)^2}$
 
-= `r (2*2.2+.54)*(1.96+.84)^2/.5^2` = 154.9 ~ 155
+= `r (2*.54+2.2)*(1.96+.84)^2/.5^2` = 102.9 ~ 103
 
-The non-zinc group should have 1832 subjects, and the zinc group should have 916 subjects.
+The non-zinc group should have 103 subjects, and the zinc group should have 52 subjects.
